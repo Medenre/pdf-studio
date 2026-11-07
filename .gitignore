@@ -1,0 +1,6 @@
+# Local workspace settings; app-specific exclusions live in pdf-studio-app/.gitignore.
+/.agents/
+/.codex/
+/.aws/
+/.env*
+/.DS_Store

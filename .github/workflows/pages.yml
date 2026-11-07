@@ -1,0 +1,61 @@
+name: Publier PDF Studio sur GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    defaults:
+      run:
+        working-directory: pdf-studio-app
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v6
+      - name: Configurer Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: pdf-studio-app/package-lock.json
+      - name: Lire la configuration GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Installer les dépendances
+        run: npm ci --no-audit --no-fund
+      - name: Vérifier TypeScript
+        run: npm run typecheck
+      - name: Compiler la version statique
+        run: npm run build:pages
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+      - name: Préparer les fichiers à publier
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: pdf-studio-app/dist-pages
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publier sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
